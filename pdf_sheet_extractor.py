@@ -247,8 +247,13 @@ def ocr_cell(
     bordered = cv2.copyMakeBorder(
         gray, 10, 10, 10, 10, cv2.BORDER_CONSTANT, value=255
     )
+    # Upscale small cell crops before OCR; Tesseract is much more reliable when
+    # scanned spreadsheet text is closer to normal reading size.
+    enlarged = cv2.resize(
+        bordered, None, fx=2.0, fy=2.0, interpolation=cv2.INTER_CUBIC
+    )
     normalized = cv2.threshold(
-        bordered, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU
+        enlarged, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU
     )[1]
     config = f"--psm {psm} --oem {oem} -c preserve_interword_spaces=1"
     text = pytesseract.image_to_string(normalized, lang=lang, config=config)
